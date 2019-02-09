@@ -7,7 +7,9 @@ slovak_translations = {
     "humidity": "vlhkosť vzduchu",
     "pressure": "tlak",
     "speed": "rýchlosť vetra",
-    "deg": "smer vetra"
+    "deg": "smer vetra",
+    "clouds": "oblačno",
+    "mist": "hmla"
 }
 
 english_translations = {
@@ -16,7 +18,7 @@ english_translations = {
     "humidity": "air humidity",
     "pressure": "air pressure",
     "speed": "wind speed",
-    "deg": "wind direction"
+    "deg": "wind direction",
 }
 
 units = {
@@ -24,28 +26,45 @@ units = {
     "humidity": "%",
     "pressure": "hPa",
     "speed": "km/h",
-    "deg": "°",  # TODO: Create function to convert it to cardinal direction.
+    "deg": "°",
 }
 
 
+def get_translation(string, slovak=False):
+    try:
+        return slovak_translations[string.lower()] if slovak else english_translations[string.lower()]
+    except KeyError:
+        return string
+
+
+def get_cardinal_direction(degrees, slovak=False):
+    directions = ["S", "SV", "V", "JV", "J", "JZ", "Z", "SZ"] if slovak else \
+        ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    for i in range(1, len(directions)):
+        if 45 * i - 22.5 <= degrees <= 45 * i + 22.5:
+            return directions[i]
+    return directions[0]
+
+
 def pull_data(dictionary, group_name, attributes, slovak=False):
-    # more verbose if condition to prevent its repetition inside the for loop. TODO: Format output to fixed width.
-    if slovak:
-        for attribute in attributes:
-            print(slovak_translations[attribute].capitalize() + ": " + str(dictionary[group_name][attribute]) + units[
-                attribute])
-    else:
-        for attribute in attributes:
-            print(english_translations[attribute].capitalize() + ": " + str(dictionary[group_name][attribute]) + units[
-                attribute])
+    # Sometimes the full data isn't provided. TODO: Format output to fixed width.
+    for attribute in attributes:
+        try:
+            print(get_translation(attribute, slovak).capitalize() + ": ", end="")
+            if attribute == 'deg':
+                print(get_cardinal_direction(dictionary[group_name]["deg"], slovak) + ' - ', end="")
+            print(str(dictionary[group_name][attribute]) + units[attribute])
+        except KeyError:
+            continue
 
 
 def print_weather_summary(data_dictionary, city, slovak=False):
     print(("Aktuálne počasie v meste %s: " if slovak else "The current weather in %s is ") % (
         city), end="")
     # It is possible to meet more than one weather condition for a requested location.
-    # It is also possible to make more readable code. TODO: Translate the weather.
-    print(*[data_dictionary["weather"][i]["main"] for i in range(len(data_dictionary["weather"]))])
+    # It is also possible to make more readable code.
+    print(*[get_translation(data_dictionary["weather"][i]["main"], slovak) for i in
+            range(len(data_dictionary["weather"]))])
 
 
 def main():
