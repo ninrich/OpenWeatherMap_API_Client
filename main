@@ -1,0 +1,30 @@
+import sys, socket
+
+
+def main():
+    city_name = sys.argv[1].encode()
+    api_key = b'5ca8918f281cf43caa19b1a4d504202b'
+    api_call = b'http://api.openweathermap.org/data/2.5/weather?q=' + city_name + b'&forecast?id=524901&APPID=' + api_key
+    request = b"GET /data/2.5/weather?q=Brno&forecast?id=524901&APPID=5ca8918f281cf43caa19b1a4d504202b HTTP/1.1\r\nHost: www.api.openweathermap.org\r\n\r\n"
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(("api.openweathermap.org", 80))
+    s.sendall(request)
+    result = s.recv(10000).decode('utf-8')
+    start_of_data_index = result.find('{')
+    data = result[start_of_data_index:]
+    data_dictionary = eval(data)
+    print(city_name)
+    print(data_dictionary["weather"][0]["main"])
+    for attribute in ["temp", "humidity", "pressure"]:
+        print(attribute+': '+str(data_dictionary["main"][attribute]))
+    for attribute in ["speed", "deg"]:
+        print(attribute + ': '+str(data_dictionary["wind"][attribute]))
+
+    while len(result) > 0:
+        result = s.recv(10000)
+
+    s.close()
+
+
+if __name__ == '__main__':
+    main()
